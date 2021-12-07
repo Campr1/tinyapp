@@ -5,22 +5,20 @@ const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
+// set ejs as the template engine
 app.set("view engine", "ejs");
 
+// generate random alpha-numeric string for shortURL
 function generateRandomString() {
-  const randomChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const result = '';
-  for ( var i = 0; i < length; i++ ) {
-      result += randomChars.charAt(Math.floor(Math.random() * randomChars.length));
-  }
-  return result;
-}
+  return Math.random().toString(20).substr(2, 6)
+};
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
+//Routes
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -49,7 +47,17 @@ app.get("/urls/:shortURL", (req, res) => {
 
 app.post("/urls", (req, res) => {
   console.log(req.body);  
-  res.send("Ok");         
+  let randomStr = generateRandomString();
+
+  // save shortURL & longURL to db when post request is recieved
+  urlDatabase[randomStr] = req.params.longURL;
+  res.render(`/urls/${randomStr}`); //redirect
+
+});
+ //redirect shortURL to longURL
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL]
+  res.redirect(longURL);
 });
 
 app.listen(PORT, () => {
