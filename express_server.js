@@ -5,6 +5,11 @@ const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
+const cookieParser = require('cookie-parser')
+app.use(cookieParser())
+
+
+
 // set ejs as the template engine
 app.set("view engine", "ejs");
 
@@ -19,6 +24,11 @@ const urlDatabase = {
 };
 
 //Routes
+app.get('/', function (req, res) {
+  // Cookies that have not been signed
+  console.log('Cookies: ', req.cookies)
+});
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
