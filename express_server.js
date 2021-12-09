@@ -143,11 +143,11 @@ app.get('/login', (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  for (const [userID, value] of Object.entries(users)) {
+  for (const [key, value] of Object.entries(users)) {
     console.log(req.body.email, req.body.password)
     if (req.body.email === value.email){
       if(req.body.password === value.password){
-  res.cookie("user_id", userID);
+  res.cookie("user_id", key);
   return res.redirect(`/urls`);   
     }      // Respond redirect to urls page
   }
