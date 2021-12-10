@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
 const cookieParser = require('cookie-parser');
+const { localsName } = require('ejs');
 app.use(cookieParser());
 
 // object to save users and user info
@@ -23,8 +24,14 @@ let users = {
 }
 
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW"
+},
+i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW"
+}
 };
 
 function generateRandomString() {
@@ -56,7 +63,7 @@ app.get('/urls', (req,res) => {
     urls: urlDatabase, 
     users: users[req.cookies["user_id"]]
 }
-console.log({templateVars});
+console.log(templateVars.urls);
   res.render('urls_index', templateVars);
 });
 
@@ -64,7 +71,12 @@ app.get("/urls/new", (req, res) => {
   const templateVars = { 
     users: users[req.cookies["user_id"]]
 }
+if (users[req.cookies["user_id"]]) {
   res.render("urls_new", templateVars);
+} else{
+  res.redirect("/login")
+}
+
 });
 
 app.get("/urls/:shortURL", (req, res) => {
@@ -82,11 +94,12 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-app.get('/u/:shortURL', (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+app.get('/u/:id', (req, res) => {
+  const longURL = urlDatabase[req.params.id].longURL;
+  
   res.redirect(longURL);
 });
-
+console.log(urlDatabase);
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
   let newID = generateRandomString();
