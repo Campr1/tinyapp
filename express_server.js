@@ -1,11 +1,11 @@
-const express = require ('express');
+const express = require ("express");
 const app = express();
 const PORT = 8080;
-const bcrypt = require('bcryptjs');
+const bcrypt = require("bcryptjs");
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
-const {getUserByEmail} = require('./helpers')
-const cookieSession = require('cookie-session');
+const {getUserByEmail} = require("./helpers")
+const cookieSession = require("cookie-session");
 //const { localsName } = require('ejs');
 app.use(cookieSession({
   name: "session",
@@ -28,14 +28,14 @@ let users = {
 }
 
 const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "userRandomID"
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "aJ48lW"
-  }
+  // b6UTxQ: {
+  //   longURL: "https://www.tsn.ca",
+  //   userID: "userRandomID"
+  // },
+  // i3BoGr: {
+  //   longURL: "https://www.google.ca",
+  //   userID: "aJ48lW"
+  // }
 };
 
 function generateRandomString() {
@@ -59,7 +59,7 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/hello", (req, res) => {
-  res.send('<html><body>Hello <b>World</b></body></html>\n')
+  res.send("<html><body>Hello <b>World</b></body></html>\n")
 });
 
 app.get("/urls", (req, res) => {
@@ -98,21 +98,20 @@ app.get("/urls/:shortURL", (req, res) => {
     users: users[req.session["user_id"]]
   };
   if (!urlDatabase[req.params.shortURL]) {
-    res.send('<html><body>Error</body></html>\n');
+    res.send("<html><body>Error</body></html>\n");
     return;
   }
  
   res.render("urls_show", templateVars);
 });
 
-app.get('/u/:id', (req, res) => {
+app.get("/u/:id", (req, res) => {
   console.log("00000", req.params);
   const longURL = urlDatabase[req.params.id].longURL;
   res.redirect(longURL);
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
   let newID = generateRandomString();
   urlDatabase[newID] = {longURL: req.body.longURL, userID: req.session["user_id"]}
   res.redirect(`/urls/${newID}`);         // Respond redirect
@@ -120,13 +119,11 @@ app.post("/urls", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
-console.log("iiiiiii",urlDatabase[shortURL].userID)
-console.log("yyyyyyy", req.session["user_id"])
+
   if(urlDatabase[shortURL].userID === req.session["user_id"]){
     delete urlDatabase[shortURL];
     res.redirect(`/urls`);         // Respond redirect to index page
   } else {
-    console.log("status", res)
     res.status(403).send("Error: You must be logged in to delete");
   }
 });
@@ -134,20 +131,9 @@ console.log("yyyyyyy", req.session["user_id"])
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
   longURL = req.body.longURL;
-  //urlDatabase[id] = req.body.longURL;
-  console.log("------", req.session);
-  console.log("********", urlDatabase);
-  console.log("+++++", id);
-  /*const templateVars = {s
-      urls: urlDatabase,
-      users: users[req.cookies["user_id"]],
-    };*/
 
   if(urlDatabase[id].userID === req.session["user_id"]){
-    console.log("It worked!!");
     urlDatabase[id] = {userID: req.session["user_id"], longURL}
-    console.log("LLLLLLL", urlDatabase);
-  console.log("141", urlDatabase[id])
     res.redirect("/urls");         // Respond redirect to index page
   } else {
     res.status(404).send("Error: Please login to continue");
