@@ -9,7 +9,12 @@
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
         <% if (locals.users) { %>
-          <form class="nav-item" method="POST" action="/logout"> Logged In As:     <%=   users.email    %><button>Logout</button> </form> 
+          <div>
+            Logged In As: <%=   users.email    %>
+          </div>
+          <form class="nav-item" method="POST" action="/logout"> 
+            <button type="submit">Logout</button> 
+          </form> 
         <% } else { %>
           <a class="nav-item nav-link" href="/register">Register</a>
           <a class="nav-item nav-link" href="/login">Login</a>
