@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 const {getUserByEmail} = require("./helpers")
 const cookieSession = require("cookie-session");
+const req = require("express/lib/request");
 //const { localsName } = require('ejs');
 app.use(cookieSession({
   name: "session",
@@ -14,7 +15,7 @@ app.use(cookieSession({
 app.set("view engine", "ejs");
 
 // object to save users and user info
-let users = { 
+const users = { 
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
@@ -28,14 +29,14 @@ let users = {
 }
 
 const urlDatabase = {
-  // b6UTxQ: {
-  //   longURL: "https://www.tsn.ca",
-  //   userID: "userRandomID"
-  // },
-  // i3BoGr: {
-  //   longURL: "https://www.google.ca",
-  //   userID: "aJ48lW"
-  // }
+  shortURL: {
+    longURL: "http://bing.com",
+    userID: "user2RandomID"
+  },
+  shortURL2: {
+    longURL: "http://google.com",
+    userID: "user2RandomID"
+  }
 };
 
 function generateRandomString() {
@@ -46,8 +47,7 @@ app.set('view engine', 'ejs')
 
 app.get('/', function (req, res) {
   // Cookies that have not been signed
-  console.log("Cookies: ", req.session)
- 
+  res.redirect("/urls");
 });
 
 app.get("/", (req, res,) => {
@@ -67,8 +67,14 @@ app.get("/urls", (req, res) => {
   if (!user) {
     res.redirect("/login");
   } else {
+    const userUrls = {};
+    for (const [key, value] of Object.entries(urlDatabase)) {
+      if (req.session.user_id === value.userID){
+        userUrls[key] = value;
+      }
+    }
     const templateVars = {
-    urls: urlDatabase,
+    urls: userUrls,
     users: users[req.session.user_id],
   };
     res.render("urls_index", templateVars);
@@ -106,7 +112,6 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
-  console.log("00000", req.params);
   const longURL = urlDatabase[req.params.id].longURL;
   res.redirect(longURL);
 });
@@ -116,7 +121,7 @@ app.post("/urls", (req, res) => {
   urlDatabase[newID] = {longURL: req.body.longURL, userID: req.session["user_id"]}
   res.redirect(`/urls/${newID}`);         // Respond redirect
 });
-
+//delete url
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
 
@@ -127,7 +132,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     res.status(403).send("Error: You must be logged in to delete");
   }
 });
-
+//edit url
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
   longURL = req.body.longURL;
@@ -155,11 +160,9 @@ app.post("/register", (req, res) => {
     res.status(400).send("400");
   }
   const hashedPassword = bcrypt.hashSync(password, 10);
-  console.log("99999999999", hashedPassword);
   if (getUserByEmail(req.body.email, users)) {
     return res.status(400).send("400");
   }
-  console.log(users);
     users[userID] = { 
       id: userID,
       email: req.body.email,
@@ -178,22 +181,21 @@ app.post("/login", (req, res) => {
   let password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
   for (const [key, value] of Object.entries(users)) {
-    console.log(req.body.email, req.body.password)
     if (req.body.email === value.email){
-      if(bcrypt.compareSync(hashedPassword, value.password)){
-        res.session.user_id = key;
-        return res.redirect("/urls");   
-      }      // Respond redirect to urls page
+      if(bcrypt.compareSync(req.body.password, value.password)){
+        req.session.user_id = key;
+        res.redirect("/urls");                  // Respond redirect to urls page
+
+      }     
     }
   }
   res.status(403).send("403");
 });
-
+//logout
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/login");         
 });
 
 app.listen(PORT, () => {
-  console.log(`Tinyapp is listening on port ${PORT}.`);
 });
