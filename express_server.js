@@ -103,6 +103,7 @@ app.get("/urls/:shortURL", (req, res) => {
     longURL: urlDatabase[req.params.shortURL].longURL,
     users: users[req.session["user_id"]]
   };
+  
   if (!urlDatabase[req.params.shortURL]) {
     res.send("<html><body>Error</body></html>\n");
     return;
@@ -115,6 +116,7 @@ app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id].longURL;
   res.redirect(longURL);
 });
+
 
 app.post("/urls", (req, res) => {
   let newID = generateRandomString();
