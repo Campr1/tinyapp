@@ -96,7 +96,8 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-
+  const user = users[req.session["user_id"]];
+  
   //What would happen if a client requests a non-existent shortURL?
    const templateVars = { 
     shortURL: shortURL, 
@@ -108,8 +109,11 @@ app.get("/urls/:shortURL", (req, res) => {
     res.send("<html><body>Error</body></html>\n");
     return;
   }
- 
+  if (user) {
   res.render("urls_show", templateVars);
+  }else {
+    res.send("<html><body>Error: you must be logged in.</body></html>\n");
+  }
 });
 
 app.get("/u/:id", (req, res) => {
@@ -187,7 +191,7 @@ app.post("/login", (req, res) => {
       if(bcrypt.compareSync(req.body.password, value.password)){
         req.session.user_id = key;
         res.redirect("/urls");                  // Respond redirect to urls page
-
+        return;
       }     
     }
   }
