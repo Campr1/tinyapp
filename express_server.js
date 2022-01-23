@@ -97,11 +97,10 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const user = users[req.session["user_id"]];
-  
   //What would happen if a client requests a non-existent shortURL?
    const templateVars = { 
     shortURL: shortURL, 
-    longURL: urlDatabase[req.params.shortURL].longURL,
+    longURL: urlDatabase[shortURL].longURL,
     users: users[req.session["user_id"]]
   };
   
@@ -109,7 +108,8 @@ app.get("/urls/:shortURL", (req, res) => {
     res.send("<html><body>Error</body></html>\n");
     return;
   }
-  if (user) {
+  if(urlDatabase[shortURL].userID === req.session["user_id"]){
+    
   res.render("urls_show", templateVars);
   }else {
     res.send("<html><body>Error: you must be logged in.</body></html>\n");
