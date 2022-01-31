@@ -4,10 +4,10 @@ const PORT = 8080;
 const bcrypt = require("bcryptjs");
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
-const {getUserByEmail} = require("./helpers")
+const {getUserByEmail, emailCheck} = require("./helpers")
 const cookieSession = require("cookie-session");
 const req = require("express/lib/request");
-//const { localsName } = require('ejs');
+
 app.use(cookieSession({
   name: "session",
   keys: ["key1", "key2"]
@@ -50,10 +50,6 @@ app.get('/', function (req, res) {
   res.redirect("/urls");
 });
 
-app.get("/", (req, res,) => {
-  res.send("Welcome to Tinyapp");
-});
-
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
@@ -63,7 +59,7 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const user = users[req.session.user_id];
+  const user = req.session.user_id;
   if (!user) {
     res.redirect("/login");
   } else {
@@ -96,23 +92,21 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const user = users[req.session["user_id"]];
   //What would happen if a client requests a non-existent shortURL?
+  if (!urlDatabase[req.params.shortURL]) {
+    res.send("<html><body>Url does not exist.</body></html>\n");
+    return;
+  }
    const templateVars = { 
     shortURL: shortURL, 
     longURL: urlDatabase[shortURL].longURL,
     users: users[req.session["user_id"]]
   };
-  
-  if (!urlDatabase[req.params.shortURL]) {
-    res.send("<html><body>Error</body></html>\n");
-    return;
-  }
-  if(urlDatabase[shortURL].userID === req.session["user_id"]){
+  if(urlDatabase[shortURL].userID !== req.session["user_id"]){
     
-  res.render("urls_show", templateVars);
-  }else {
     res.send("<html><body>Error: you must be logged in.</body></html>\n");
+  }else {
+    res.render("urls_show", templateVars);
   }
 });
 
@@ -121,9 +115,12 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
-
 app.post("/urls", (req, res) => {
   let newID = generateRandomString();
+  if (!req.session.user_id) {
+    res.status(403).send("Error: You must be logged in to creat a short URL");
+    return;
+  }
   urlDatabase[newID] = {longURL: req.body.longURL, userID: req.session["user_id"]}
   res.redirect(`/urls/${newID}`);         // Respond redirect
 });
@@ -149,7 +146,6 @@ app.post("/urls/:id", (req, res) => {
   } else {
     res.status(404).send("Error: Please login to continue");
   }
-
 });
 
 app.get('/register', (req, res) => {
@@ -163,20 +159,21 @@ app.post("/register", (req, res) => {
 
   //If the e-mail or password are empty strings, send back a response with the 400 status code
   if (req.body.email === "" || req.body.password === ""){
-    res.status(400).send("400");
+    res.status(400).send("Please enter a valid email and password");
+  }
+  if (emailCheck(req.body.email, users)){
+    res.status(403).send("This email is already being used. Please enter a different one.");
   }
   const hashedPassword = bcrypt.hashSync(password, 10);
-  if (getUserByEmail(req.body.email, users)) {
-    return res.status(400).send("400");
-  }
+    
     users[userID] = { 
       id: userID,
       email: req.body.email,
       password: hashedPassword
     };
-    req.session.user_id = userID;
-    res.redirect("/urls");
 
+  req.session.user_id = userID;
+  res.redirect("/urls");
 });
 //Login
 app.get('/login', (req, res) => {
@@ -184,8 +181,6 @@ app.get('/login', (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  let password = req.body.password;
-  const hashedPassword = bcrypt.hashSync(password, 10);
   for (const [key, value] of Object.entries(users)) {
     if (req.body.email === value.email){
       if(bcrypt.compareSync(req.body.password, value.password)){
@@ -195,12 +190,12 @@ app.post("/login", (req, res) => {
       }     
     }
   }
-  res.status(403).send("403");
+  res.status(403).send("Please enter a valid email and password");
 });
 //logout
 app.post("/logout", (req, res) => {
   req.session = null;
-  res.redirect("/login");         
+  res.redirect("/urls");         
 });
 
 app.listen(PORT, () => {
